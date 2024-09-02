@@ -9,7 +9,7 @@ exporters:
     endpoint: "http://zipkin-all-in-one:9411/api/v2/spans"
     format: proto
   otlp/dataprepper:
-    endpoint: 192.168.16.28:4400
+    endpoint: data-prepper:21890
     tls:
       insecure: true
       insecure_skip_verify: true
