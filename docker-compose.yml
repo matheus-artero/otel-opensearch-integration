@@ -1,0 +1,72 @@
+services:
+  go-service:
+    build:
+      context: ./services/golang
+    container_name: golang-service
+    command: "go run /app/main.go"
+    depends_on:
+      - otel-collector
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.88.0
+    container_name: opentelemetry-collector
+    command: [--config=/etc/otel-collector-config.yaml]
+    volumes: 
+      - ./opentelemetry/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"
+    depends_on:
+      - zipkin-all-in-one
+      - data-prepper
+
+  zipkin-all-in-one:
+    image: openzipkin/zipkin:latest
+    container_name: zipkin
+    environment:
+      - JAVA_OPTS=-Xms1024m -Xmx1024m -XX:+ExitOnOutOfMemoryError
+    ports:
+      - "9411:9411"
+  
+  data-prepper:
+    image: opensearchproject/data-prepper:2.9.0
+    container_name: data-prepper
+    volumes:
+      - ./opensearch/dataprepper/pipelines.yaml:/usr/share/data-prepper/pipelines/pipelines.yaml
+      - ./opensearch/dataprepper/data-prepper-config.yaml:/usr/share/data-prepper/config/data-prepper-config.yaml
+    ports:
+      - "21890:21890"
+    depends_on:
+      - "opensearch"
+
+  dashboards:
+    build: 
+      context: ./opensearch/dashboard
+    container_name: opensearch-dashboards
+    ports:
+      - "5601:5601"
+    expose:
+      - "5601"
+    environment:
+      OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
+    depends_on:
+      - opensearch
+
+  opensearch:
+    image: opensearchproject/opensearch:2.9.0
+    container_name: opensearch
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=AeK2CS4*sdKCS5*Kx6g77b##dDD@jfgdess
+      - DISABLE_SECURITY_PLUGIN=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the OpenSearch user, set to at least 65536 on modern systems
+        hard: 65536
+    ports:
+      - 9200:9200
+      - 9600:9600 # required for Performance Analyzer
