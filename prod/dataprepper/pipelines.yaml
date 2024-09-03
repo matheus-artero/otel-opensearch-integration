@@ -1,0 +1,64 @@
+otel-trace-pipeline:
+  workers: 1
+  delay: "100" 
+  source:
+    otel_trace_source:
+      ssl: false
+  buffer:
+    bounded_blocking:
+      buffer_size: 25600
+      batch_size: 400
+  sink:
+    - pipeline:
+        name: "raw-traces-pipeline"
+    - pipeline:
+        name: "otel-service-map-pipeline"
+
+
+raw-traces-pipeline:
+  workers: 1
+  delay: 3000
+  source:
+    pipeline:
+      name: "otel-trace-pipeline"
+  buffer:
+    bounded_blocking:
+      buffer_size: 25600
+      batch_size: 400
+  processor:
+    - otel_trace_raw:
+    - otel_trace_group:
+        hosts: [ "https://<ip_address>:9200" ]
+        insecure: true
+        username: "<username>"
+        password: "<password>"
+  sink:
+    - opensearch:
+        hosts: ["https://<ip_address>:9200"]
+        insecure: true
+        username: "<username>"
+        password: "<password>"  
+        index_type: trace-analytics-raw
+
+
+otel-service-map-pipeline:
+  workers: 1
+  delay: 3000
+  source:
+    pipeline:
+      name: "otel-trace-pipeline"
+  processor:
+    - service_map_stateful:
+        window_duration: 180 
+  buffer:
+      bounded_blocking:
+        buffer_size: 25600
+        batch_size: 400
+  sink:
+    - opensearch:
+        hosts: ["https://<ip_address>:9200"]
+        insecure: true
+        username: "<username>"
+        password: "<password>"
+        index_type: trace-analytics-service-map
+        bulk_size: 4
