@@ -8,8 +8,8 @@ services:
       - otel-collector
 
   otel-collector:
-    image: otel/opentelemetry-collector:0.88.0
-    container_name: opentelemetry-collector
+    image: otel/opentelemetry-collector:0.108.0
+    container_name: otel-collector
     command: [--config=/etc/otel-collector-config.yaml]
     volumes: 
       - ./opentelemetry/otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -41,7 +41,7 @@ services:
   dashboards:
     build: 
       context: ./opensearch/dashboard
-    container_name: opensearch-dashboards
+    container_name: dashboard-opensearch
     ports:
       - "5601:5601"
     expose:
