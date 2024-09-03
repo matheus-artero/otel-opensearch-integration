@@ -41,7 +41,7 @@ raw-traces-pipeline:
   processor:
     - otel_trace_raw:
     - otel_trace_group:
-        hosts: [ "https://opensearch:9200" ]
+        hosts: [ "http://opensearch:9200" ]
         insecure: true
         username: "admin"
         password: "AeK2CS4*sdKCS5*Kx6g77b##dDD@jfgdess"
