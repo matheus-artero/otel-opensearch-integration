@@ -1,3 +1,4 @@
+# traces
 otel-trace-pipeline:
   # workers is the number of threads processing data in each pipeline. 
   # We recommend same value for all pipelines.
@@ -27,7 +28,6 @@ otel-trace-pipeline:
     - pipeline:
         name: "otel-service-map-pipeline"
 
-
 raw-traces-pipeline:
   workers: 1
   delay: 3000
@@ -48,11 +48,10 @@ raw-traces-pipeline:
   sink:
     - opensearch:
         hosts: ["http://opensearch:9200"]
+        insecure: true
         username: "admin"
         password: "AeK2CS4*sdKCS5*Kx6g77b##dDD@jfgdess"  
-        insecure: true
         index_type: trace-analytics-raw
-
 
 otel-service-map-pipeline:
   workers: 1
@@ -80,10 +79,36 @@ otel-service-map-pipeline:
   sink:
     - opensearch:
         hosts: ["http://opensearch:9200"]
-        username: "admin"
-        password: "AeK2CS4*sdKCS5*Kx6g77b##dDD@jfgdess"  
         insecure: true
+        username: "admin"
+        password: "AeK2CS4*sdKCS5*Kx6g77b##dDD@jfgdess"
         index_type: trace-analytics-service-map
         #index: otel-v1-apm-span-%{yyyy.MM.dd}
         #max_retries: 20
         bulk_size: 4
+
+# metrics
+otel-metrics-pipeline:
+    workers: 1
+    delay: 3000
+    source:
+      otel_metrics_source:
+        ssl: false
+    buffer:
+      bounded_blocking:
+        buffer_size: 1024 # max number of records the buffer accepts
+        batch_size: 1024 # max number of records the buffer drains after each read
+    processor:
+      - otel_metrics:
+          calculate_histogram_buckets: true
+          calculate_exponential_histogram_buckets: true
+          exponential_histogram_max_allowed_scale: 10
+          flatten_attributes: false
+    sink:
+      - opensearch:
+          hosts: ["http://opensearch:9200"]
+          insecure: true
+          username: "admin"
+          password: "AeK2CS4*sdKCS5*Kx6g77b##dDD@jfgdess" 
+          index: metrics-otel-v1-%{yyyy.MM.dd}
+          bulk_size: 4

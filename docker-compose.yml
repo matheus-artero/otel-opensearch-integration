@@ -3,7 +3,7 @@ services:
     build:
       context: ./services/golang
     container_name: golang-service
-    command: "go run /app/main.go"
+    command: "./main"
     depends_on:
       - otel-collector
 
@@ -16,16 +16,7 @@ services:
     ports:
       - "4317:4317"
     depends_on:
-      - zipkin-all-in-one
       - data-prepper
-
-  zipkin-all-in-one:
-    image: openzipkin/zipkin:latest
-    container_name: zipkin
-    environment:
-      - JAVA_OPTS=-Xms1024m -Xmx1024m -XX:+ExitOnOutOfMemoryError
-    ports:
-      - "9411:9411"
   
   data-prepper:
     image: opensearchproject/data-prepper:2.9.0
@@ -34,7 +25,8 @@ services:
       - ./opensearch/dataprepper/pipelines.yaml:/usr/share/data-prepper/pipelines/pipelines.yaml
       - ./opensearch/dataprepper/data-prepper-config.yaml:/usr/share/data-prepper/config/data-prepper-config.yaml
     ports:
-      - "21890:21890"
+      - "21890:21890" # port traces
+      - "21891:21891" # port metrics
     depends_on:
       - "opensearch"
 
