@@ -8,16 +8,7 @@ services:
     ports:
       - "4317:4317"
     depends_on:
-      - zipkin-all-in-one
       - data-prepper
-
-  zipkin-all-in-one:
-    image: openzipkin/zipkin:latest
-    container_name: zipkin
-    environment:
-      - JAVA_OPTS=-Xms1024m -Xmx1024m -XX:+ExitOnOutOfMemoryError
-    ports:
-      - "9411:9411"
   
   data-prepper:
     # dataprepper>=2.5.0 needs a newer cpu
@@ -28,4 +19,5 @@ services:
       - ./dataprepper/pipelines.yaml:/usr/share/data-prepper/pipelines/pipelines.yaml
       - ./dataprepper/data-prepper-config.yaml:/usr/share/data-prepper/config/data-prepper-config.yaml
     ports:
-      - "21890:21890"
+      - "21890:21890" # port traces
+      - "21891:21891" # port metrics
